@@ -8,7 +8,7 @@ class User:
 		self.db = MySQLdb.connect(user=config.MYSQL_USER, passwd=config.MYSQL_PASSWD, db=config.MYSQL_DB)
 
 		c = self.db.cursor()
-		c.execute("""SELECT name FROM users WHERE uid = {}""".format(uid))
+		c.execute("""SELECT name FROM users WHERE uid = %s""", (uid,))
 		self.name = c.fetchall()[0][0]
 
 	def is_authenticated(self):
