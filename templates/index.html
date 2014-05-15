@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+{% block body %}
+<script type="text/javascript">
+	$(function() {
+		$( document ).ready(function() {
+			// doc ready. load users
+			$.getJSON($SCRIPT_ROOT + '/_get_people', {}, function(data) {
+				var people = data.people;
+				for(var i=0; i<people.length; ++i){
+					var p = people[i];
+					$( "#people" ).append("<span class=\"person\" id=\"p_" + p.id + "\" person_id=\"" + p.id + "\">" + p.name + "</span>");
+					}
+					
+			});
+			// load groups
+			$.getJSON($SCRIPT_ROOT + '/_get_groups', {}, function(data) {
+				var groups = data.groups;
+				for(var i=0; i<groups.length; ++i){
+					var g = groups[i];
+					$( "#groups" ).append("<span class=\"group\" id=\"g_" + g.gid + "\" group_id=\"" + g.gid + "\">" + g.name + "</span>");
+					}
+					
+			});
+
+
+		});
+
+		var send = function() {
+			var list = getSelectedPeople();
+			$.getJSON($SCRIPT_ROOT + '/send', {
+				msg: $('input[name="msg"]').val(),
+				to: JSON.stringify(list)
+				}, function(data) {
+				$("#result").text(data.result);
+			});
+			return false;
+		}
+
+		$('a#send').bind('click', send);
+
+		$('#people').on('click', '.person', function(event) {
+				var target = $(this);
+				var id = target[0].attributes.person_id;
+				target.toggleClass('selected');
+				console.log(id.value);
+				});
+
+		$('#groups').on('click', '.group', function(event) {
+				var target = $(this);
+				var id = target[0].attributes.group_id;
+				target.toggleClass('selected');
+				console.log(id.value);
+				selectPeopleByGroups();
+				});
+		function selectPeopleByGroups(){
+			var list = getSelectedGroups();
+			$.getJSON($SCRIPT_ROOT + '/_get_people_in_groups', {
+				grouplist: JSON.stringify(list)
+				}, function(data) {
+				console.log(data.result);
+				var people = data.result;
+
+				// clear all currently selected people
+				$('#people > .selected').each(function(index) {
+					$(this).removeClass('selected');
+				});
+				
+				// select everyone the server told us to
+				for(var i=0; i<people.length; ++i){
+					var id = people[i];
+					$("#people > #p_" + id).addClass('selected');
+				}
+				$("#result").text(data.result);
+			});
+			return false;
+		}
+
+		function getSelectedGroups(){
+			var list = [];
+			$('#groups > .selected').each(function(index) {
+				var id = this.attributes.group_id.value;
+				list.push(id);
+			});
+			return(list);
+		}
+		function getSelectedPeople(){
+			var list = [];
+			$('#people > .selected').each(function(index) {
+				var id = this.attributes.person_id.value;
+				list.push(id);
+			});
+			return(list);
+		}
+
+	});
+</script>
+
+<style>
+	.person, .group{
+		border: 2px solid;
+		border-radius: 10px;
+		background-color: #bbb;
+		margin: 2px;
+		padding: 2px;
+	}
+	.selected{
+		background-color: #3c3;
+	}
+</style>
+
+<h1>uh hi</h1>
+<p><input type="text" name="msg"><a href="#" id="send">send</a></p>
+<p><span id="result">res</span></p>
+<h2>groups</h2>
+<p id="groups"></p>
+<h2>people</h2>
+<p id="people"></p>
+{% endblock %}
